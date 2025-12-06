@@ -29,6 +29,7 @@ class ParkingSession(models.Model):
         ('active', 'Активна'),      # Машина на парковке
         ('completed', 'Завершена'), # Машина уехала, оплачено
         ('cancelled', 'Отменена'),  # Сессия отменена
+        
     ]
     
     # Поля модели
@@ -66,9 +67,11 @@ class ParkingSession(models.Model):
         # Автоматически обновляем статус места
         if self.status == 'active':
             self.spot.is_occupied = True
+        
         else:
             self.spot.is_occupied = False
         self.spot.save()
+
         
         # Вызываем оригинальный метод save
         super().save(*args, **kwargs)
