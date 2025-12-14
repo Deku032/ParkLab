@@ -1,17 +1,27 @@
 from django.shortcuts import render
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q, Exists, OuterRef
 from django.utils import timezone
 from .models import ParkingSpot, ParkingSession
 from datetime import timedelta
 
 
 def dashboard(request):
-    # Получаем все места
-    parking_spots = ParkingSpot.objects.all().order_by('number')
+    # Оптимизированный запрос с аннотацией занятости
+    parking_spots = ParkingSpot.objects.annotate(
+        # Добавляем поле occupied_annotation в каждый объект
+        occupied_annotation=Exists(
+            ParkingSession.objects.filter(
+                spot=OuterRef('pk'),  # pk текущего ParkingSpot
+                status='active'
+            )
+        )
+    ).order_by('number')
     
     # Статистика для виджетов
     total_spots = parking_spots.count()
-    occupied_spots = parking_spots.filter(is_occupied=True).count()
+    
+    # Считаем занятые места по аннотации
+    occupied_spots = parking_spots.filter(occupied_annotation=True).count()
     free_spots = total_spots - occupied_spots
     
     # Выручка за сегодня
@@ -21,13 +31,15 @@ def dashboard(request):
         status='completed'
     ).aggregate(total=Sum('cost'))['total'] or 0
     
-    # Активные сессии
-    active_sessions = ParkingSession.objects.filter(status='active')
+    # Активные сессии с оптимизацией
+    active_sessions = ParkingSession.objects.filter(
+        status='active'
+    ).select_related('spot', 'tariff')  # Загружаем связанные объекты за один запрос
     
     # Последние транзакции
     recent_transactions = ParkingSession.objects.filter(
         status='completed'
-    ).order_by('-check_out')[:10]
+    ).select_related('spot', 'tariff').order_by('-check_out')[:10]
     
     context = {
         'parking_spots': parking_spots,

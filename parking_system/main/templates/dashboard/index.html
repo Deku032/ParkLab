@@ -8,15 +8,15 @@
     <style>
         .spot-card { transition: all 0.3s; cursor: pointer; }
         .spot-card:hover { transform: scale(1.05); }
-        .occupied { background-color: #dc3545 !important; }
-        .free { background-color: #28a745 !important; }
+        .occupied { background-color: #d11527 !important; }
+        .free { background-color: #21a63f !important; }
         .stat-card { border-left: 4px solid #0d6efd; }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark">
         <div class="container">
-            <span class="navbar-brand mb-0 h1"> Система управления парковкой</span>
+            <span class="navbar-brand mb-0 h1">🚗 Система управления парковкой</span>
         </div>
     </nav>
 
@@ -56,7 +56,7 @@
                 </div>
             </div>
         </div>
-        <!--GG -->
+
         <!-- Кнопки действий -->
         <div class="row mb-4">
             <div class="col">
@@ -64,21 +64,23 @@
                     📥 Зарегистрировать въезд
                 </button>
                 <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#checkoutModal">
-                     Зарегистрировать выезд
+                    📤 Зарегистрировать выезд
                 </button>
             </div>
         </div>
 
-        <!-- Схема парковки -->
+        <!-- Схема парковки (ИСПРАВЛЕННАЯ ЧАСТЬ) -->
         <div class="row">
             <h4 class="mb-3">Схема парковки</h4>
             {% for spot in parking_spots %}
             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
-                <div class="card text-white spot-card {% if spot.is_occupied %}occupied{% else %}free{% endif %}">
+                <!-- ИСПРАВЛЕНО: spot.occupied_annotation вместо spot.is_occupied -->
+                <div class="card text-white spot-card {% if spot.occupied_annotation %}occupied{% else %}free{% endif %}">
                     <div class="card-body text-center">
                         <h5 class="card-title">{{ spot.number }}</h5>
                         <p class="card-text mb-1">
-                            {% if spot.is_occupied %}
+                            <!-- ИСПРАВЛЕНО: spot.occupied_annotation вместо spot.is_occupied -->
+                            {% if spot.occupied_annotation %}
                                 {% for session in active_sessions %}
                                     {% if session.spot.id == spot.id %}
                                         {{ session.car_plate }}
@@ -89,10 +91,11 @@
                             {% endif %}
                         </p>
                         <small>
-                            {% if spot.is_occupied %}
+                            <!-- ИСПРАВЛЕНО: spot.occupied_annotation вместо spot.is_occupied -->
+                            {% if spot.occupied_annotation %}
                                 Занято
                             {% else %}
-                                 Свободно
+                                ✅ Свободно
                             {% endif %}
                         </small>
                     </div>
@@ -101,7 +104,6 @@
             {% endfor %}
         </div>
 
-        <!-- GD-->
         <!-- Последние транзакции -->
         <div class="row mt-4">
             <div class="col-12">
@@ -144,7 +146,7 @@
         </div>
     </div>
 
-    <!-- Модальные окна (упрощенные версии) -->
+    <!-- Модальные окна -->
     <div class="modal fade" id="checkinModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
