@@ -1,3 +1,6 @@
+{% extends 'dashboard/base.html' %}
+{% block content %}
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -60,26 +63,26 @@
         <!-- Кнопки действий -->
         <div class="row mb-4">
             <div class="col">
-                <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#checkinModal">
-                    📥 Зарегистрировать въезд
-                </button>
-                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#checkoutModal">
-                    📤 Зарегистрировать выезд
-                </button>
+                <a href="{% url 'register_entry' %}" class="btn btn-primary me-2">
+                📥 Зарегистрировать въезд
+            </a>
+            <a href="{% url 'quick_exit' %}" class="btn btn-warning">
+                📤 Зарегистрировать выезд
+            </a>
             </div>
         </div>
 
-        <!-- Схема парковки (ИСПРАВЛЕННАЯ ЧАСТЬ) -->
+        
         <div class="row">
             <h4 class="mb-3">Схема парковки</h4>
             {% for spot in parking_spots %}
             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
-                <!-- ИСПРАВЛЕНО: spot.occupied_annotation вместо spot.is_occupied -->
+                
                 <div class="card text-white spot-card {% if spot.occupied_annotation %}occupied{% else %}free{% endif %}">
                     <div class="card-body text-center">
                         <h5 class="card-title">{{ spot.number }}</h5>
                         <p class="card-text mb-1">
-                            <!-- ИСПРАВЛЕНО: spot.occupied_annotation вместо spot.is_occupied -->
+                            
                             {% if spot.occupied_annotation %}
                                 {% for session in active_sessions %}
                                     {% if session.spot.id == spot.id %}
@@ -91,7 +94,7 @@
                             {% endif %}
                         </p>
                         <small>
-                            <!-- ИСПРАВЛЕНО: spot.occupied_annotation вместо spot.is_occupied -->
+                            
                             {% if spot.occupied_annotation %}
                                 Занято
                             {% else %}
@@ -164,3 +167,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+{% endblock %}

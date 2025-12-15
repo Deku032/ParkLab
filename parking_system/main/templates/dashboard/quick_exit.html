@@ -1,0 +1,49 @@
+{% extends 'dashboard/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">Регистрация выезда</h4>
+                </div>
+                <div class="card-body">
+                    {% if active_sessions %}
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Выберите автомобиль для выезда:</label>
+                            <select name="session_id" class="form-control" required>
+                                {% for session in active_sessions %}
+                                <option value="{{ session.id }}">
+                                    {{ session.car_plate }} - Место {{ session.spot.number }} 
+                                    (с {{ session.check_in|time:"H:i" }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-car-front"></i> Подтвердить выезд
+                            </button>
+                            <a href="{% url 'main' %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Отмена
+                            </a>
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Нет активных сессий для выезда
+                    </div>
+                    <a href="{% url 'main' %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Вернуться на дашборд
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
