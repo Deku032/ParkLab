@@ -94,25 +94,25 @@ class ParkingSession(models.Model):
             raise ValidationError(errors)
     
     def calculate_cost(self):
-        """Расчет стоимости парковки"""
+    
         # Проверяем, что оба времени установлены
         if not self.check_out or not self.check_in:
             return 0
-        
-        # Проверяем тип данных (должны быть datetime)
-        if not isinstance(self.check_out, type(self.check_in)):
-            return 0
-        
-        # Разница во времени в часах
-        try:
-            duration = self.check_out - self.check_in
-            hours = duration.total_seconds() / 3600
-            
-            # Округляем до 2 знаков
-            total = float(hours) * float(self.tariff.price_per_hour)
-            return round(total, 2)
-        except (TypeError, AttributeError):
-            return 0
+    
+    # Разница во времени в часах
+        duration = self.check_out - self.check_in
+        hours = duration.total_seconds() / 3600
+    
+    # Расчет стоимости с преобразованием в Decimal с 2 знаками
+        from decimal import Decimal, ROUND_HALF_UP
+    
+    # Умножаем часы на цену
+        total = Decimal(str(hours)) * self.tariff.price_per_hour
+    
+    # Округляем до 2 знаков после запятой
+        total_rounded = total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    
+        return total_rounded
     
     def complete(self, check_out_time=None):
         """Завершить сессию"""
