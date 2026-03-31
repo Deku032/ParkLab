@@ -88,7 +88,7 @@ class ParkingSession(models.Model):
         
         # 3. Если указано время выезда, статус должен быть завершен
         if self.check_out and self.status == 'active':
-            errors['status'] = 'Активная сессия не может иметь время выезда'
+            self.status == "completed"
         
         if errors:
             raise ValidationError(errors)

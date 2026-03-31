@@ -6,6 +6,9 @@ from datetime import timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .forms import EntryForm, ExitForm
+from django.db.models.functions import Round
+from django.http import JsonResponse
+from django.db.models import Exists, OuterRef
 
 
 def dashboard(request):
@@ -75,7 +78,7 @@ def register_entry(request):
             
             if not tariff:  
                 messages.error(request, 'Нет активного тарифа!')
-                return redirect('dashboard')  
+                return redirect('main')  
             try:
                 
                 ParkingSession.objects.create(
@@ -87,7 +90,7 @@ def register_entry(request):
                 
                 messages.success(request, 
                     f'Автомобиль {car_plate} зарегистрирован на месте {spot.number}')
-                return redirect('dashboard')
+                return redirect('main')
                 
             except Exception as e:  
                 messages.error(request, f'Ошибка: {str(e)}')
@@ -115,7 +118,7 @@ def register_exit(request, session_id):
                 session.complete()
                 messages.success(request, 
                     f'Автомобиль {session.car_plate} выехал. Стоимость: {session.cost} ₽')
-                return redirect('dashboard')
+                return redirect('main')
             except Exception as e:
                 messages.error(request, f'Ошибка: {str(e)}')
     else:
@@ -142,7 +145,7 @@ def quick_exit(request):
             session.complete()
             messages.success(request, 
                 f'Автомобиль {session.car_plate} выехал. Стоимость: {session.cost} ₽')
-            return redirect('dashboard')
+            return redirect('main')
         except Exception as e:
             messages.error(request, f'Ошибка: {str(e)}')
     
@@ -150,3 +153,9 @@ def quick_exit(request):
     return render(request, 'dashboard/quick_exit.html', {
         'active_sessions': active_sessions
     })
+
+def api_free_spots(request):
+    free_spots = ParkingSpot.objects.filter(
+        ~Exists(ParkingSession.objects.filter(spot=OuterRef('pk'), status='active'))
+    ).values('id', 'number', 'zone')
+    return JsonResponse({'free_spots': list(free_spots)})
