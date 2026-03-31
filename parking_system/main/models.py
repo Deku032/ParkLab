@@ -2,6 +2,10 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.db import models as django_models
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 
 
 class ParkingSpot(models.Model):
@@ -35,6 +39,7 @@ class ParkingSession(models.Model):
         ('completed', 'Завершена'),
         ('cancelled', 'Отменена'),
     ]
+    
     
     # Основные поля
     car_plate = models.CharField(max_length=15, verbose_name="Госномер")
@@ -139,3 +144,110 @@ class ParkingSession(models.Model):
     def __str__(self):
         return f"{self.car_plate} на {self.spot.number} ({self.status})"
     
+
+class UserProfile(models.Model):
+    ROLE_CHOICES = [
+        ('admin', 'Администратор'),
+        ('operator', 'Оператор'),
+        ('client', 'Клиент'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='client')
+    phone = models.CharField(max_length=20, blank=True, verbose_name="Телефон")
+    
+    def __str__(self):
+        return f"{self.user.username} ({self.get_role_display()})"
+
+
+class Reservation(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Активна'),
+        ('completed', 'Завершена'),
+        ('cancelled', 'Отменена'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservations', verbose_name="Клиент")
+    spot = models.ForeignKey(ParkingSpot, on_delete=models.CASCADE, related_name='reservations', verbose_name="Парковочное место")
+    start_time = models.DateTimeField(verbose_name="Начало бронирования")
+    end_time = models.DateTimeField(verbose_name="Конец бронирования")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['spot', 'start_time', 'end_time'],
+                condition=models.Q(status='active'),
+                name='unique_active_reservation_per_spot_time'
+            )
+        ]
+    
+    def __str__(self):
+        return f"Бронь {self.spot.number} для {self.user.username} с {self.start_time} до {self.end_time}"
+    def clean(self):
+    # Проверка, что время начала раньше окончания
+        if self.start_time >= self.end_time:
+            raise ValidationError("Время начала должно быть раньше времени окончания")
+    
+        # Проверка пересечения с активными сессиями парковки
+        overlapping_sessions = ParkingSession.objects.filter(
+            spot=self.spot,
+            status='active',
+            check_in__lt=self.end_time,
+            check_out__gt=self.start_time
+        ).exists()
+        if overlapping_sessions:
+            raise ValidationError("На это место уже есть активная парковочная сессия в указанный период")
+    
+        # Проверка пересечения с другими активными бронями
+        overlapping_reservations = Reservation.objects.filter(
+            spot=self.spot,
+            status='active',
+            start_time__lt=self.end_time,
+            end_time__gt=self.start_time
+        ).exclude(id=self.id).exists()
+        if overlapping_reservations:
+            raise ValidationError("На это время уже есть активная бронь")
+    
+
+class Payment(models.Model):
+    PAYMENT_METHODS = [
+        ('cash', 'Наличные'),
+        ('card', 'Банковская карта'),
+        ('online', 'Онлайн'),
+    ]
+    session = models.OneToOneField(
+        'ParkingSession', 
+        on_delete=models.CASCADE, 
+        related_name='payment'
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    paid_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20, 
+        choices=[('pending', 'Ожидает'), ('paid', 'Оплачено')], 
+        default='paid'   # при имитации сразу paid
+    )
+    method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='online')
+    receipt_number = models.CharField(max_length=50, unique=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.receipt_number:
+            # Генерация номера чека: PARK-ГГГГММДДЧЧММСС-IDсессии
+            from django.utils import timezone
+            timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
+            self.receipt_number = f"PARK-{timestamp}-{self.session.id}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Чек {self.receipt_number} на сумму {self.amount} руб."
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Создаёт профиль при создании нового пользователя"""
+    if created:
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Сохраняет профиль при сохранении пользователя"""
+    instance.profile.save()

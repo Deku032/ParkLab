@@ -1,0 +1,30 @@
+{% extends 'dashboard/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4>Чек об оплате</h4>
+                </div>
+                <div class="card-body">
+                    <p><strong>Номер чека:</strong> {{ payment.receipt_number }}</p>
+                    <p><strong>Дата оплаты:</strong> {{ payment.paid_at|date:"d.m.Y H:i" }}</p>
+                    <hr>
+                    <p><strong>Автомобиль:</strong> {{ session.car_plate }}</p>
+                    <p><strong>Парковочное место:</strong> {{ session.spot.number }}</p>
+                    <p><strong>Период:</strong> {{ session.check_in|date:"d.m.Y H:i" }} – {{ session.check_out|date:"d.m.Y H:i" }}</p>
+                    <p><strong>Сумма:</strong> {{ payment.amount }} руб.</p>
+                    <p><strong>Способ оплаты:</strong> {{ payment.get_method_display }}</p>
+                    <hr>
+                    <p class="text-center">Спасибо за пользование парковкой!</p>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'main' %}" class="btn btn-primary">На главную</a>
+                        <a href="{% url 'profile' %}" class="btn btn-secondary">В личный кабинет</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'dashboard/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4>Оплата парковки</h4>
+                </div>
+                <div class="card-body">
+                    <p><strong>Автомобиль:</strong> {{ session.car_plate }}</p>
+                    <p><strong>Парковочное место:</strong> {{ session.spot.number }}</p>
+                    <p><strong>Время въезда:</strong> {{ session.check_in|date:"d.m.Y H:i" }}</p>
+                    <p><strong>Время выезда:</strong> {{ session.check_out|date:"d.m.Y H:i" }}</p>
+                    <p><strong>Стоимость:</strong> {{ session.cost }} руб.</p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Способ оплаты</label>
+                            <select name="payment_method" class="form-select">
+                                <option value="cash">Наличные</option>
+                                <option value="card">Банковская карта</option>
+                                <option value="online">Онлайн</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Оплатить</button>
+                        <a href="{% url 'main' %}" class="btn btn-secondary">Отмена</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

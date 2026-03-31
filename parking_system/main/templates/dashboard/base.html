@@ -19,16 +19,25 @@
 <body>
     <!-- Навигация -->
     <nav class="navbar navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'main' %}">
-                <i class="bi bi-p-square-fill"></i> Система управления парковкой
-            </a>
-            <div class="navbar-nav">
-                <a href="{% url 'main' %}" class="nav-link text-light">
-                    <i class="bi bi-speedometer2"></i> Дашборд
-                </a>
-            </div>
-        </div>
+        <div class="navbar-nav ms-auto">
+        <a href="{% url 'main' %}" class="nav-link text-light">Дашборд</a>
+    {% if user.is_authenticated %}
+        <a href="{% url 'profile' %}" class="nav-link text-light">
+            <i class="bi bi-person-circle"></i> {{ user.username }}
+        </a>
+        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="nav-link text-light" style="background:none; border:none;">Выход</button>
+</form>
+    {% else %}
+        <a href="{% url 'login' %}" class="nav-link text-light">
+            <i class="bi bi-box-arrow-in-right"></i> Вход
+        </a>
+        <a href="{% url 'register' %}" class="nav-link text-light">
+            <i class="bi bi-person-plus"></i> Регистрация
+        </a>
+    {% endif %}
+</div>
     </nav>
 
     <!-- Сообщения -->

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import ParkingSpot, Tariff, ParkingSession
+from .models import ParkingSpot, Tariff, ParkingSession, Payment
+
 
 # 1. Админка для парковочных мест
 @admin.register(ParkingSpot)
@@ -54,3 +55,11 @@ class ParkingSessionAdmin(admin.ModelAdmin):
                     id__in=occupied_spots
                 )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['receipt_number', 'session', 'amount', 'method', 'paid_at']
+    list_filter = ['method', 'status']
+    search_fields = ['receipt_number', 'session__car_plate']
+    readonly_fields = ['receipt_number', 'paid_at']
